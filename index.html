@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Cascade: AI Edition</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121218;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        header {
+            width: 100%;
+            background-color: #2a2a36;
+            padding: 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            margin: 0;
+            color: #4fc3f7;
+            font-size: 1.8rem;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            max-width: 1000px;
+            height: 80vh;
+            margin-top: 20px;
+        }
+        
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .level-title {
+            font-size: 1.4rem;
+            color: #4fc3f7;
+        }
+        
+        .metrics {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .metric {
+            background-color: #2a2a36;
+            padding: 8px 15px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        
+        .network-container {
+            flex: 1;
+            background-color: #1d1d25;
+            border-radius: 8px;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .network-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .control-panel {
+            display: flex;
+            margin-top: 20px;
+            justify-content: space-between;
+            background-color: #2a2a36;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .parameter-controls {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-label {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="range"] {
+            width: 120px;
+        }
+        
+        .action-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background-color: #4fc3f7;
+            border: none;
+            color: #121218;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #81d4fa;
+        }
+        
+        .tokens-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(42, 42, 54, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+        }
+        
+        .tutorial-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .tutorial-card {
+            background-color: #2a2a36;
+            max-width: 60%;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .tutorial-title {
+            color: #4fc3f7;
+            margin-top: 0;
+        }
+        
+        .tutorial-content {
+            line-height: 1.6;
+        }
+        
+        .tutorial-next {
+            margin-top: 15px;
+            background-color: #4fc3f7;
+            border: none;
+            color: #121218;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Viral Cascade: AI Edition</h1>
+    </header>
+    
+    <div class="game-container">
+        <div class="level-info">
+            <div class="level-title">Level 1: Classification Basics</div>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-label">Accuracy</div>
+                    <div class="metric-value" id="accuracy-value">0%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Tokens Left</div>
+                    <div class="metric-value" id="tokens-value">10</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Target</div>
+                    <div class="metric-value" id="target-value">85%</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="network-container">
+            <canvas class="network-canvas" id="network-canvas"></canvas>
+            <div class="tokens-container">
+                <button id="training-token">Deploy Training Token</button>
+            </div>
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="parameter-controls">
+                <div class="control-group">
+                    <div class="control-label">Learning Rate</div>
+                    <div class="slider-container">
+                        <input type="range" id="learning-rate" min="0.1" max="2" step="0.1" value="0.5">
+                        <span id="learning-rate-value">0.5</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label">Activation Threshold</div>
+                    <div class="slider-container">
+                        <input type="range" id="activation-threshold" min="0.1" max="0.9" step="0.1" value="0.5">
+                        <span id="activation-threshold-value">0.5</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="control-label">Dropout Rate</div>
+                    <div class="slider-container">
+                        <input type="range" id="dropout-rate" min="0" max="0.5" step="0.1" value="0">
+                        <span id="dropout-rate-value">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="action-controls">
+                <button id="reset-button">Reset Network</button>
+                <button id="train-button">Run Training</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tutorial-overlay" id="tutorial-overlay">
+        <div class="tutorial-card">
+            <h3 class="tutorial-title">Welcome to Viral Cascade: AI Edition</h3>
+            <p class="tutorial-content">
+                In this game, you're a neural network trainer. Your goal is to adjust weights and parameters to achieve the target accuracy for each level.
+                <br><br>
+                <strong>How to play:</strong>
+                <br>
+                1. Deploy training tokens on nodes to influence them
+                <br>
+                2. Adjust parameters like learning rate and activation threshold
+                <br>
+                3. Run training to see how your network performs
+                <br>
+                4. Achieve the target accuracy to complete the level
+            </p>
+            <button class="tutorial-next" id="tutorial-next">Start Training</button>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('network-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Make canvas responsive
+        function resizeCanvas() {
+            const container = document.querySelector('.network-container');
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            drawNetwork(); // Redraw the network when canvas is resized
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Initialize canvas size
+        
+        // Game parameters
+        let learningRate = 0.5;
+        let activationThreshold = 0.5;
+        let dropoutRate = 0;
+        let tokensLeft = 10;
+        let accuracy = 0;
+        let targetAccuracy = 85;
+        
+        // Update UI with initial values
+        document.getElementById('accuracy-value').textContent = accuracy + '%';
+        document.getElementById('tokens-value').textContent = tokensLeft;
+        document.getElementById('target-value').textContent = targetAccuracy + '%';
+        
+        // Neural network structure
+        const network = {
+            layers: [
+                { name: 'Input', nodes: 4, positions: [] },
+                { name: 'Hidden', nodes: 6, positions: [] },
+                { name: 'Output', nodes: 2, positions: [] }
+            ],
+            weights: [], // Will store connection weights
+            activations: [], // Will store node activation values
+            nodeFocus: [] // Will track which nodes have training tokens applied
+        };
+        
+        // Initialize weights with random values
+        function initializeWeights() {
+            network.weights = [];
+            network.activations = [];
+            network.nodeFocus = [];
+            
+            // Initialize activations for all nodes (all layers)
+            network.layers.forEach(layer => {
+                const layerActivations = new Array(layer.nodes).fill(0);
+                network.activations.push(layerActivations);
+                
+                const layerFocus = new Array(layer.nodes).fill(false);
+                network.nodeFocus.push(layerFocus);
+            });
+            
+            // Initialize weights between layers
+            for (let l = 0; l < network.layers.length - 1; l++) {
+                const currentLayer = network.layers[l];
+                const nextLayer = network.layers[l + 1];
+                
+                const layerWeights = [];
+                for (let i = 0; i < currentLayer.nodes; i++) {
+                    const nodeWeights = [];
+                    for (let j = 0; j < nextLayer.nodes; j++) {
+                        // Random weight between -0.5 and 0.5
+                        nodeWeights.push(Math.random() - 0.5);
+                    }
+                    layerWeights.push(nodeWeights);
+                }
+                network.weights.push(layerWeights);
+            }
+        }
+        
+        // Calculate node positions for visualization
+        function calculateNodePositions() {
+            const padding = 80; // Padding from edges
+            const layerSpacing = (canvas.width - 2 * padding) / (network.layers.length - 1);
+            
+            network.layers.forEach((layer, layerIndex) => {
+                const nodeSpacing = (canvas.height - 2 * padding) / (layer.nodes - 1 || 1);
+                const positions = [];
+                
+                for (let i = 0; i < layer.nodes; i++) {
+                    positions.push({
+                        x: padding + layerIndex * layerSpacing,
+                        y: layer.nodes > 1 ? padding + i * nodeSpacing : canvas.height / 2
+                    });
+                }
+                
+                network.layers[layerIndex].positions = positions;
+            });
+        }
+        
+        // Draw the neural network on canvas
+        function drawNetwork() {
+            if (!canvas.width || !canvas.height) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            calculateNodePositions();
+            
+            // Draw connections between nodes
+            for (let l = 0; l < network.layers.length - 1; l++) {
+                const currentLayer = network.layers[l];
+                const nextLayer = network.layers[l + 1];
+                
+                for (let i = 0; i < currentLayer.nodes; i++) {
+                    for (let j = 0; j < nextLayer.nodes; j++) {
+                        const sourceNode = currentLayer.positions[i];
+                        const targetNode = nextLayer.positions[j];
+                        const weight = network.weights[l][i][j];
+                        
+                        // Determine line width based on weight
+                        const absWeight = Math.abs(weight);
+                        ctx.lineWidth = absWeight * 3 + 0.5;
+                        
+                        // Determine color based on weight sign
+                        const alpha = Math.min(absWeight + 0.2, 1);
+                        if (weight >= 0) {
+                            ctx.strokeStyle = `rgba(79, 195, 247, ${alpha})`;
+                        } else {
+                            ctx.strokeStyle = `rgba(255, 87, 34, ${alpha})`;
+                        }
+                        
+                        // Draw connection line
+                        ctx.beginPath();
+                        ctx.moveTo(sourceNode.x, sourceNode.y);
+                        ctx.lineTo(targetNode.x, targetNode.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Draw nodes
+            network.layers.forEach((layer, layerIndex) => {
+                layer.positions.forEach((position, nodeIndex) => {
+                    const activation = network.activations[layerIndex][nodeIndex];
+                    const isFocused = network.nodeFocus[layerIndex][nodeIndex];
+                    
+                    // Node base appearance
+                    ctx.beginPath();
+                    ctx.arc(position.x, position.y, 15, 0, Math.PI * 2);
+                    
+                    // Fill based on activation level
+                    const activationLevel = Math.max(0.1, activation);
+                    ctx.fillStyle = isFocused ? 
+                        `rgba(124, 179, 66, ${activationLevel})` : 
+                        `rgba(79, 195, 247, ${activationLevel})`;
+                    ctx.fill();
+                    
+                    // Node border
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = isFocused ? '#8bc34a' : '#29b6f6';
+                    ctx.stroke();
+                    
+                    // Node label
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Label with layer and node index
+                    const label = `${layer.name[0]}${nodeIndex+1}`;
+                    ctx.fillText(label, position.x, position.y);
+                });
+            });
+        }
+        
+        // Simulate training process (simplified)
+        function runTraining() {
+            // This is a simplified simulation of a training process
+            // In a real game, this would be more complex and interactive
+            
+            // Forward pass (simplified)
+            // Initialize input layer with random values
+            network.activations[0] = network.activations[0].map(() => Math.random());
+            
+            // Propagate through hidden and output layers
+            for (let l = 0; l < network.layers.length - 1; l++) {
+                const currentLayer = network.layers[l];
+                const nextLayer = network.layers[l + 1];
+                
+                for (let j = 0; j < nextLayer.nodes; j++) {
+                    let sum = 0;
+                    
+                    for (let i = 0; i < currentLayer.nodes; i++) {
+                        sum += network.activations[l][i] * network.weights[l][i][j];
+                    }
+                    
+                    // Apply dropout (randomly deactivate nodes based on dropout rate)
+                    if (l < network.layers.length - 2 && Math.random() < dropoutRate) {
+                        network.activations[l+1][j] = 0;
+                    } else {
+                        // Simple sigmoid-like activation function
+                        network.activations[l+1][j] = 1 / (1 + Math.exp(-(sum - activationThreshold)));
+                    }
+                }
+            }
+            
+            // Update weights based on focused nodes and learning rate
+            for (let l = 0; l < network.layers.length - 1; l++) {
+                for (let i = 0; i < network.layers[l].nodes; i++) {
+                    for (let j = 0; j < network.layers[l+1].nodes; j++) {
+                        if (network.nodeFocus[l][i] || network.nodeFocus[l+1][j]) {
+                            // Apply a stronger update to focused nodes
+                            const update = (Math.random() - 0.5) * learningRate * 2;
+                            network.weights[l][i][j] += update;
+                        } else {
+                            // Apply a smaller random update to other nodes
+                            const update = (Math.random() - 0.5) * learningRate * 0.5;
+                            network.weights[l][i][j] += update;
+                        }
+                    }
+                }
+            }
+            
+            // Update accuracy (simulated)
+            // In a real game, this would be based on actual performance metrics
+            const oldAccuracy = accuracy;
+            
+            // Calculate a pseudo-accuracy based on network state
+            // Favors networks with good weight distribution and focused nodes
+            let weightBalance = 0;
+            let totalWeights = 0;
+            
+            for (let l = 0; l < network.weights.length; l++) {
+                for (let i = 0; i < network.weights[l].length; i++) {
+                    for (let j = 0; j < network.weights[l][i].length; j++) {
+                        totalWeights++;
+                        const weight = network.weights[l][i][j];
+                        // Prefer weights that aren't too extreme
+                        weightBalance += Math.exp(-(weight * weight) / 0.5);
+                    }
+                }
+            }
+            
+            // Count focused nodes
+            let focusCount = 0;
+            for (let l = 0; l < network.nodeFocus.length; l++) {
+                for (let i = 0; i < network.nodeFocus[l].length; i++) {
+                    if (network.nodeFocus[l][i]) focusCount++;
+                }
+            }
+            
+            // Calculate accuracy
+            const weightFactor = weightBalance / totalWeights;
+            const focusFactor = Math.min(focusCount / 4, 1); // Cap at 4 focused nodes
+            
+            // Update accuracy with some randomness
+            const newAccuracy = Math.min(
+                95, // Cap at 95%
+                oldAccuracy + 
+                (weightFactor * 10) + 
+                (focusFactor * 15) + 
+                (Math.random() * 5) - 2
+            );
+            
+            // Ensure accuracy doesn't decrease below a minimum percentage of previous
+            accuracy = Math.max(oldAccuracy * 0.95, newAccuracy);
+            accuracy = Math.max(0, accuracy); // Ensure non-negative
+            
+            // Update UI
+            document.getElementById('accuracy-value').textContent = Math.round(accuracy) + '%';
+            
+            // Check if level is complete
+            if (accuracy >= targetAccuracy) {
+                setTimeout(() => {
+                    alert('Level complete! You reached the target accuracy.');
+                }, 100);
+            }
+            
+            // Redraw network
+            drawNetwork();
+        }
+        
+        // Initialize game
+        function initializeGame() {
+            initializeWeights();
+            tokensLeft = 10;
+            accuracy = 0;
+            document.getElementById('accuracy-value').textContent = accuracy + '%';
+            document.getElementById('tokens-value').textContent = tokensLeft;
+            drawNetwork();
+        }
+        
+        // Event listeners for controls
+        document.getElementById('learning-rate').addEventListener('input', (e) => {
+            learningRate = parseFloat(e.target.value);
+            document.getElementById('learning-rate-value').textContent = learningRate.toFixed(1);
+        });
+        
+        document.getElementById('activation-threshold').addEventListener('input', (e) => {
+            activationThreshold = parseFloat(e.target.value);
+            document.getElementById('activation-threshold-value').textContent = activationThreshold.toFixed(1);
+        });
+        
+        document.getElementById('dropout-rate').addEventListener('input', (e) => {
+            dropoutRate = parseFloat(e.target.value);
+            document.getElementById('dropout-rate-value').textContent = dropoutRate.toFixed(1);
+        });
+        
+        document.getElementById('reset-button').addEventListener('click', () => {
+            initializeGame();
+        });
+        
+        document.getElementById('train-button').addEventListener('click', () => {
+            runTraining();
+        });
+        
+        // Handle training token deployment
+        let isDeployingToken = false;
+        
+        document.getElementById('training-token').addEventListener('click', () => {
+            if (tokensLeft <= 0) {
+                alert('No training tokens left!');
+                return;
+            }
+            
+            isDeployingToken = true;
+            document.getElementById('network-canvas').style.cursor = 'pointer';
+        });
+        
+        // Handle node selection for token deployment
+        canvas.addEventListener('click', (e) => {
+            if (!isDeployingToken) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if click is on a node
+            let nodeFound = false;
+            for (let l = 0; l < network.layers.length; l++) {
+                const layer = network.layers[l];
+                
+                for (let i = 0; i < layer.nodes; i++) {
+                    const node = layer.positions[i];
+                    const distance = Math.sqrt(Math.pow(x - node.x, 2) + Math.pow(y - node.y, 2));
+                    
+                    if (distance <= 15) { // Node radius is 15
+                        nodeFound = true;
+                        
+                        // Toggle focus state
+                        if (network.nodeFocus[l][i]) {
+                            network.nodeFocus[l][i] = false;
+                            tokensLeft++; // Return token
+                        } else {
+                            network.nodeFocus[l][i] = true;
+                            tokensLeft--; // Use token
+                        }
+                        
+                        document.getElementById('tokens-value').textContent = tokensLeft;
+                        drawNetwork();
+                        break;
+                    }
+                }
+                
+                if (nodeFound) break;
+            }
+            
+            if (!nodeFound) {
+                isDeployingToken = false;
+                document.getElementById('network-canvas').style.cursor = 'default';
+            }
+        });
+        
+        // Tooltip functionality
+        canvas.addEventListener('mousemove', (e) => {
+            const tooltip = document.getElementById('tooltip');
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if mouse is over a node
+            let tooltipContent = null;
+            for (let l = 0; l < network.layers.length; l++) {
+                const layer = network.layers[l];
+                
+                for (let i = 0; i < layer.nodes; i++) {
+                    const node = layer.positions[i];
+                    const distance = Math.sqrt(Math.pow(x - node.x, 2) + Math.pow(y - node.y, 2));
+                    
+                    if (distance <= 15) { // Node radius is 15
+                        const activation = network.activations[l][i].toFixed(2);
+                        const isFocused = network.nodeFocus[l][i] ? 'Yes' : 'No';
+                        
+                        tooltipContent = `
+                            <div><strong>${layer.name} Node ${i+1}</strong></div>
+                            <div>Activation: ${activation}</div>
+                            <div>Training Focus: ${isFocused}</div>
+                        `;
+                        
+                        tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+                        tooltip.style.top = (e.clientY - rect.top + 10) + 'px';
+                        break;
+                    }
+                }
+                
+                if (tooltipContent) break;
+            }
+            
+            if (tooltipContent) {
+                tooltip.innerHTML = tooltipContent;
+                tooltip.style.display = 'block';
+            } else {
+                tooltip.style.display = 'none';
+            }
+        });
+        
+        // Close tutorial
+        document.getElementById('tutorial-next').addEventListener('click', () => {
+            document.getElementById('tutorial-overlay').style.display = 'none';
+            initializeGame();
+        });
+        
+        // Initialize game on load
+        initializeGame();
+    </script>
+</body>
+</html>
