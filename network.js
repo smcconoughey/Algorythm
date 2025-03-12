@@ -29,11 +29,11 @@ let epoch = 0;
 const activationFunctions = {
     sigmoid: {
         forward: function(x) {
-            return 1 / (1 + Math.exp(-x));
+            return 1 / (1 + Math.exp(-Math.max(-20, Math.min(20, x)))); // Clamp to avoid overflow
         },
         backward: function(x) {
-            const sigmoid = 1 / (1 + Math.exp(-x));
-            return sigmoid * (1 - sigmoid);
+            const sig = this.forward(x);
+            return sig * (1 - sig);
         }
     },
     relu: {
@@ -46,10 +46,10 @@ const activationFunctions = {
     },
     tanh: {
         forward: function(x) {
-            return Math.tanh(x);
+            return Math.tanh(Math.max(-20, Math.min(20, x))); // Clamp to avoid overflow
         },
         backward: function(x) {
-            const tanh = Math.tanh(x);
+            const tanh = Math.tanh(Math.max(-20, Math.min(20, x)));
             return 1 - tanh * tanh;
         }
     },
@@ -207,6 +207,7 @@ const optimizers = {
 
 // Initialize network based on level configuration
 function initializeNetwork() {
+    console.log('Initializing neural network');
     const currentLevel = gameData.levels[gameData.player.currentLevel];
     const structure = currentLevel.networkStructure;
     
@@ -215,7 +216,8 @@ function initializeNetwork() {
     for (let i = 0; i < structure.length; i++) {
         network.layers.push({
             size: structure[i],
-            positions: []
+            positions: [],
+            name: i === 0 ? 'Input' : (i === structure.length - 1 ? 'Output' : 'Hidden')
         });
     }
     
@@ -283,8 +285,18 @@ function initializeNetwork() {
         network.momentum.weights.push(layerMomentum);
     }
     
-    // Calculate node positions for visualization
-    calculateNodePositions();
+    console.log('Neural network initialized');
+    // Fill with some initial data for visualization
+    runRandomActivations();
+}
+
+// Run some random activations for initial visualization
+function runRandomActivations() {
+    for (let l = 0; l < network.layers.length; l++) {
+        for (let i = 0; i < network.layers[l].size; i++) {
+            network.activations[l][i] = Math.random() * 0.5;
+        }
+    }
 }
 
 // Forward pass through the network
@@ -602,6 +614,7 @@ function evaluateNetwork() {
 
 // Generate training data based on level data model
 function generateTrainingData() {
+    console.log('Generating training data');
     const currentLevel = gameData.levels[gameData.player.currentLevel];
     const dataModel = currentLevel.dataModel;
     trainingData = [];
@@ -631,6 +644,8 @@ function generateTrainingData() {
         default:
             generateBinaryClassificationData(trainSamples, valSamples, dataModel);
     }
+    
+    console.log(`Generated ${trainingData.length} training samples and ${validationData.length} validation samples`);
 }
 
 // Generate binary classification data

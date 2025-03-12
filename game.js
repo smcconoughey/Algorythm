@@ -100,6 +100,7 @@ function showTutorial(tutorialIndex) {
 
 // Initialize level parameters and network
 function initializeLevel() {
+    console.log('Initializing level');
     // Reset game state
     levelComplete = false;
     tokensLeft = currentLevel.maxTokens;
@@ -147,10 +148,13 @@ function initializeLevel() {
     
     // Start animation loop
     startAnimation();
+    
+    console.log('Level initialized');
 }
 
 // Animation loop
 function startAnimation() {
+    console.log('Starting animation loop');
     if (frameId) {
         cancelAnimationFrame(frameId);
     }
@@ -356,8 +360,13 @@ function initGame() {
     console.log('Initializing game...');
     
     // Force level selection to be visible initially
-    document.getElementById('level-select-overlay').style.display = 'flex';
-    document.getElementById('game-view').style.display = 'none';
+    const levelSelectOverlay = document.getElementById('level-select-overlay');
+    const gameView = document.getElementById('game-view');
+    
+    if (levelSelectOverlay && gameView) {
+        levelSelectOverlay.style.display = 'flex';
+        gameView.style.display = 'none';
+    }
     
     // Set up event listeners
     setupEventListeners();

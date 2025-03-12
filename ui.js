@@ -1,10 +1,50 @@
 // UI-related functions
 
 // Canvas and context references
-const canvas = document.getElementById('network-canvas');
-const ctx = canvas.getContext('2d');
-const chartCanvas = document.getElementById('accuracy-chart');
-const chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
+let canvas;
+let ctx;
+let chartCanvas;
+let chartCtx;
+
+// Initialize canvas references
+function initCanvasReferences() {
+    console.log('Initializing canvas references');
+    canvas = document.getElementById('network-canvas');
+    ctx = canvas ? canvas.getContext('2d') : null;
+    chartCanvas = document.getElementById('accuracy-chart');
+    chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
+    
+    if (!canvas || !ctx) {
+        console.error('Failed to get network canvas or context');
+    } else {
+        console.log('Canvas initialized successfully');
+        // Force resize canvas to parent container
+        resizeCanvas();
+    }
+}
+
+// Resize canvas to fit parent container
+function resizeCanvas() {
+    if (!canvas) return;
+    
+    const container = document.querySelector('.network-container');
+    if (container) {
+        console.log('Resizing canvas to fit container');
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+        
+        if (chartCanvas && chartCtx) {
+            const chartContainer = document.querySelector('.chart-container');
+            if (chartContainer) {
+                chartCanvas.width = chartContainer.offsetWidth;
+                chartCanvas.height = chartContainer.offsetHeight;
+            }
+        }
+        
+        // Force redraw after resize
+        drawNetwork();
+    }
+}
 
 // UI state
 let particles = [];
@@ -15,8 +55,12 @@ let lossHistory = [];
 
 // Calculate node positions for visualization
 function calculateNodePositions() {
-    if (!canvas || !canvas.width) return;
+    if (!canvas || !ctx || !canvas.width || !network || !network.layers) {
+        console.error('Cannot calculate node positions - missing required objects');
+        return;
+    }
     
+    console.log('Calculating node positions for network visualization');
     const padding = 80; // Padding from edges
     
     // Calculate layer spacing
@@ -41,12 +85,17 @@ function calculateNodePositions() {
         
         layer.positions = positions;
     }
+    console.log('Node positions calculated');
 }
 
 // Draw the neural network on canvas
 function drawNetwork() {
-    if (!canvas || !canvas.width || !canvas.height) return;
+    if (!canvas || !ctx || !canvas.width || !canvas.height || !network || !network.layers) {
+        console.error('Cannot draw network - missing required objects');
+        return;
+    }
     
+    console.log('Drawing network visualization');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     calculateNodePositions();
     
@@ -401,6 +450,7 @@ function showConceptInfo(conceptId) {
 // Close concept popup when clicking outside
 function closeConceptOnClick(e) {
     const popup = document.getElementById('concept-popup');
+    if (!popup) return;
     const closeButton = document.getElementById('close-concept');
     
     if (!popup.contains(e.target) || e.target === closeButton) {
@@ -513,6 +563,9 @@ function activatePowerUp(powerUpId) {
 function initUIEventListeners() {
     console.log('Initializing UI event listeners');
 
+    // First initialize canvas references
+    initCanvasReferences();
+
     // Close button for concept popup
     const closeConceptButton = document.getElementById('close-concept');
     if (closeConceptButton) {
@@ -608,6 +661,7 @@ function initUIEventListeners() {
                 
                 for (let i = 0; i < layer.size; i++) {
                     const node = layer.positions[i];
+                    if (!node) continue;
                     const distance = Math.sqrt(Math.pow(x - node.x, 2) + Math.pow(y - node.y, 2));
                     
                     if (distance <= 15) { // Node radius is 15
@@ -639,26 +693,7 @@ function initUIEventListeners() {
     }
     
     // Handle responsive canvas
-    window.addEventListener('resize', () => {
-        if (canvas) {
-            const container = document.querySelector('.network-container');
-            if (container) {
-                canvas.width = container.offsetWidth;
-                canvas.height = container.offsetHeight;
-                
-                if (chartCanvas) {
-                    const chartContainer = document.querySelector('.chart-container');
-                    if (chartContainer) {
-                        chartCanvas.width = chartContainer.offsetWidth;
-                        chartCanvas.height = chartContainer.offsetHeight;
-                    }
-                }
-                
-                drawNetwork();
-                updateAccuracyChart();
-            }
-        }
-    });
+    window.addEventListener('resize', resizeCanvas);
     
     // Add direct access to level 1 button
     const startLevel1Button = document.getElementById('start-level-1-btn');
